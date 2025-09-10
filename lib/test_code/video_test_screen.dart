@@ -13,7 +13,7 @@ import 'package:pushup_app/features/pose_detector/utils/angle_calculator.dart';
 
 // This whole screen is our wittle secret, onwy for debug mode!
 class VideoTestScreen extends StatefulWidget {
-  VideoTestScreen({super.key});
+  const VideoTestScreen({super.key});
 
   @override
   State<VideoTestScreen> createState() => _VideoTestScreenState();

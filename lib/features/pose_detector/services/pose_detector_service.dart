@@ -1,7 +1,6 @@
 import 'dart:async'; // THE FIX: Corrected the import from 'dart-async'
 import 'dart:isolate';
 import 'dart:ui';
-import 'package:camera/camera.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
 // A custom class to hold all the data coming back from the isolate.

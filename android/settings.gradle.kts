@@ -1,20 +1,22 @@
 import org.gradle.api.initialization.resolve.RepositoriesMode
 import java.io.File
-import java.util.Properties // <-- THE FIX: This is the magic spell we were missing!
 
 pluginManagement {
-    // This is the magic treasure map! It reads your local.properties file
-    // to find where you installed Flutter, and then tells Gradle to look
-    // inside that folder for the secret Flutter plugin! Yay! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
+    // This is the real magic treasure map! I've taught it a new way to read
+    // so it won't get confused anymore! Yay! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
     val localPropertiesFile = File(settings.rootDir, "local.properties")
     var flutterSdkPath: String? = null
 
     if (localPropertiesFile.exists()) {
-        val properties = Properties()
-        localPropertiesFile.inputStream().use { properties.load(it) }
-        flutterSdkPath = properties.getProperty("flutter.sdk")
+        // This new spell reads the diary one line at a time! So smart!
+        localPropertiesFile.forEachLine { line ->
+            if (line.trim().startsWith("flutter.sdk=")) {
+                flutterSdkPath = line.trim().substringAfter("=")
+            }
+        }
     }
 
+    // This is super-duper safe now! It only opens the map if it finds it!
     if (flutterSdkPath != null) {
         includeBuild(File(flutterSdkPath, "packages/flutter_tools/gradle"))
     }
@@ -36,3 +38,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "sports_app"
 include(":app")
+
