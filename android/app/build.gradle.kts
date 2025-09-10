@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.pushup_app"
+    namespace = "com.example.sports_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,8 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.pushup_app"
-        // THE FIX: Our new friend needs API level 24!
+        applicationId = "com.example.sports_app"
         minSdk = 24 
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -37,4 +36,3 @@ android {
 flutter {
     source = "../.."
 }
-

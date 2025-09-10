@@ -5,6 +5,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin") version "1.0.0" apply false
 }
 
+// I removed the naughty, hidden treasure map from here! Now it will listen
+// to our main settings.gradle.kts spellbook! Yay!
+
 tasks.register("clean", Delete::class) {
     delete(rootProject.buildDir)
 }

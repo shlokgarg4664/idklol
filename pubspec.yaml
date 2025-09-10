@@ -1,4 +1,4 @@
-name: pushup_app
+name: sports_app
 description: "A new Flutter project."
 publish_to: 'none' 
 version: 1.0.0+1
@@ -21,7 +21,6 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   video_player: ^2.8.6
   file_picker: ^8.0.3
-  # THE FIX: Using the super-duper 'full-gpl' package!
   ffmpeg_kit_flutter_full_gpl: ^6.0.3 
   path_provider: ^2.1.3
 
@@ -30,4 +29,3 @@ flutter:
   assets:
     - assets/
     - test_assets/
-
