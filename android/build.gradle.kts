@@ -1,4 +1,4 @@
-// This file is now super simple because all the magic happens in settings.gradle.kts!
+// This spellbook is now super simple and uses the newest magic!
 plugins {
     id("com.android.application") version "8.2.2" apply false
     id("org.jetbrains.kotlin.android") version "1.9.23" apply false

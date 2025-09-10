@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart'; // <-- NEW: Import for kDebugMode
+import 'package:flutter/foundation.dart'; // <-- Our little secret helper for debug mode!
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
-import 'package:pushup_app/features/pose_detector/services/pose_detector_service.dart';
-import 'package:pushup_app/features/pose_detector/widgets/camera_view.dart';
-import 'package:pushup_app/features/pose_detector/painters/keypoint_painter.dart';
-import 'package:pushup_app/features/pose_detector/utils/angle_calculator.dart';
-import 'package:pushup_app/features/pose_detector/utils/distance_calculator.dart';
-import 'package:pushup_app/test_code/video_test_screen.dart'; // <-- NEW: Import our test screen
+import 'package:sports_app/features/pose_detector/services/pose_detector_service.dart';
+import 'package:sports_app/features/pose_detector/widgets/camera_view.dart';
+import 'package:sports_app/features/pose_detector/painters/keypoint_painter.dart';
+import 'package:sports_app/features/pose_detector/utils/angle_calculator.dart';
+import 'package:sports_app/features/pose_detector/utils/distance_calculator.dart';
+import 'package:sports_app/test_code/video_test_screen.dart'; // It knows where to find our new friend!
 
 enum ExerciseState { initializing, notReady, inProgress }
 
@@ -85,42 +85,44 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       final landmarks = _lockedOnPose!.landmarks;
-      final leftShoulder = landmarks[PoseLandmarkType.leftShoulder]!;
-      final leftElbow = landmarks[PoseLandmarkType.leftElbow]!;
-      final leftWrist = landmarks[PoseLandmarkType.leftWrist]!;
-      final rightShoulder = landmarks[PoseLandmarkType.rightShoulder]!;
-      final rightElbow = landmarks[PoseLandmarkType.rightElbow]!;
-      final rightWrist = landmarks[PoseLandmarkType.rightWrist]!;
+      if (landmarks.isNotEmpty) {
+        final leftShoulder = landmarks[PoseLandmarkType.leftShoulder]!;
+        final leftElbow = landmarks[PoseLandmarkType.leftElbow]!;
+        final leftWrist = landmarks[PoseLandmarkType.leftWrist]!;
+        final rightShoulder = landmarks[PoseLandmarkType.rightShoulder]!;
+        final rightElbow = landmarks[PoseLandmarkType.rightElbow]!;
+        final rightWrist = landmarks[PoseLandmarkType.rightWrist]!;
 
-      final double leftAngle =
-          calculateAngle(leftShoulder, leftElbow, leftWrist);
-      final double rightAngle =
-          calculateAngle(rightShoulder, rightElbow, rightWrist);
+        final double leftAngle =
+            calculateAngle(leftShoulder, leftElbow, leftWrist);
+        final double rightAngle =
+            calculateAngle(rightShoulder, rightElbow, rightWrist);
 
-      final isUp = leftAngle > 160 || rightAngle > 160;
-      final isDown = leftAngle < 90 || rightAngle < 90;
+        final isUp = leftAngle > 160 || rightAngle > 160;
+        final isDown = leftAngle < 90 || rightAngle < 90;
 
-      if (_exerciseState == ExerciseState.inProgress) {
-        if (isUp) {
-          if (_currentStage == 'DOWN') {
-            setState(() {
-              _repCounter++;
-              _currentStage = 'UP';
-            });
+        if (_exerciseState == ExerciseState.inProgress) {
+          if (isUp) {
+            if (_currentStage == 'DOWN') {
+              setState(() {
+                _repCounter++;
+                _currentStage = 'UP';
+              });
+            }
+          } else if (isDown) {
+            _currentStage = 'DOWN';
           }
-        } else if (isDown) {
-          _currentStage = 'DOWN';
-        }
-      } else if (_exerciseState == ExerciseState.notReady) {
-        if (isUp) {
-          _inPositionCounter++;
-          if (_inPositionCounter >= _inPositionThreshold) {
-            setState(() {
-              _exerciseState = ExerciseState.inProgress;
-            });
+        } else if (_exerciseState == ExerciseState.notReady) {
+          if (isUp) {
+            _inPositionCounter++;
+            if (_inPositionCounter >= _inPositionThreshold) {
+              setState(() {
+                _exerciseState = ExerciseState.inProgress;
+              });
+            }
+          } else {
+            _inPositionCounter = 0;
           }
-        } else {
-          _inPositionCounter = 0;
         }
       }
     } else {
@@ -176,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
+          const CircularProgressIndicator(color: Colors.yellowAccent),
           const SizedBox(height: 20),
           Text(
             "Initializing AI...",
@@ -216,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        // --- NEW: This button only shows up in debug mode ---
+        // This is our wittle secret button! Only for you, master!
         if (kDebugMode)
           Positioned(
             bottom: 120,
@@ -238,7 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        // ---------------------------------------------------
       ],
     );
   }

@@ -8,118 +8,65 @@ import 'package:video_player/video_player.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:camera/camera.dart';
-import 'package:pushup_app/features/pose_detector/painters/keypoint_painter.dart';
-import 'package:pushup_app/features/pose_detector/utils/angle_calculator.dart';
+// These are our super special helpers!
+import 'package:sports_app/features/pose_detector/services/pose_detector_service.dart';
+import 'package:sports_app/features/pose_detector/painters/keypoint_painter.dart';
+import 'package:sports_app/features/pose_detector/utils/angle_calculator.dart';
+import 'video_frame_processor.dart'; // Our new magical friend!
 
-// This whole screen is our wittle secret, onwy for debug mode!
+// This whole screen is our little secret, only for debug mode!
 class VideoTestScreen extends StatefulWidget {
-  const VideoTestScreen({super.key});
+  VideoTestScreen({super.key});
 
   @override
   State<VideoTestScreen> createState() => _VideoTestScreenState();
 }
 
 class _VideoTestScreenState extends State<VideoTestScreen> {
+  final PoseDetectorService _poseDetectorService = PoseDetectorService();
+  final VideoFrameProcessor _frameProcessor = VideoFrameProcessor();
+  StreamSubscription<IsolatePoseData>? _poseSubscription;
+
   VideoPlayerController? _controller;
   CustomPaint? _customPaint;
+  List<String> _framePaths = [];
   Timer? _frameTimer;
-  List<dynamic> _allFramesData = [];
-  int _currentFrameIndex = 0;
 
   String _currentStage = 'UP';
   int _repCounter = 0;
-  String _feedback = "Select a video and its pose data to begin, master! uwu";
+  String _feedback = "Select a video to begin analysis, master! uwu";
+  bool _isProcessingVideo = false;
+  int _currentFrameIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _poseSubscription = _poseDetectorService.stream.listen(_onPoseDataReceived);
+  }
 
   @override
   void dispose() {
-    _frameTimer?.cancel();
+    _poseSubscription?.cancel();
+    _poseDetectorService.dispose();
     _controller?.dispose();
+    _frameTimer?.cancel();
+    _frameProcessor.cleanupFrames(_framePaths); // Clean up our toys!
     super.dispose();
   }
 
-  Future<bool> _loadPoseData() async {
-    try {
-      final String response =
-          await rootBundle.loadString('test_assets/real_pushup_data.json');
-      _allFramesData = await json.decode(response);
-      return true;
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _feedback = "Oh noes! I couldn't find real_pushup_data.json T_T";
-        });
-      }
-      return false;
+  void _onPoseDataReceived(IsolatePoseData data) {
+    if (data.poses.isNotEmpty) {
+      _updateRepCounter(data.poses.first);
     }
-  }
-
-  void _startFrameProcessing() {
-    if (_controller == null) return;
-    // THE FIX: The video_player doesn't give us frameRate, so we'll use a standard
-    // 30fps timer. The sync logic below is more important!
-    const frameDuration = Duration(milliseconds: 33);
-
-    _frameTimer?.cancel();
-    _frameTimer = Timer.periodic(frameDuration, (timer) {
-      if (!(_controller?.value.isPlaying ?? false)) {
-        timer.cancel();
-        return;
-      }
-      
-      // THE REAL FIX: Sync the data frame to the video's actual playtime!
-      // This keeps the skeleton and video pewfectly together! (* ^ ω ^)
-      final currentPosition = _controller!.value.position.inMilliseconds;
-      final totalDuration = _controller!.value.duration.inMilliseconds;
-      if (totalDuration > 0) {
-        _currentFrameIndex =
-            ((currentPosition / totalDuration) * _allFramesData.length)
-                .floor();
-      }
-
-      _processCurrentFrame();
-    });
-  }
-
-  void _processCurrentFrame() {
-    if (_allFramesData.isEmpty || _currentFrameIndex >= _allFramesData.length) {
-      return;
-    }
-
-    final frameData = _allFramesData[_currentFrameIndex];
-    final landmarksData = frameData['landmarks'] as List<dynamic>;
-
-    final List<Pose> poses = [];
-    if (landmarksData.isNotEmpty) {
-      final Map<PoseLandmarkType, PoseLandmark> landmarks = {};
-      for (var lm in landmarksData) {
-        final type = PoseLandmarkType.values[lm['type']];
-        landmarks[type] = PoseLandmark(
-          type: type,
-          x: (lm['x'] as num).toDouble() * _controller!.value.size.width,
-          y: (lm['y'] as num).toDouble() * _controller!.value.size.height,
-          z: (lm['z'] as num).toDouble(),
-          likelihood: (lm['likelihood'] as num).toDouble(),
-        );
-      }
-      poses.add(Pose(landmarks: landmarks));
-    }
-
-    _onPoseDataReceived(poses);
-
-    final painter = KeypointPainter(poses, _controller!.value.size,
-        InputImageRotation.rotation0deg, CameraLensDirection.back);
-
+    final painter = KeypointPainter(
+        data.poses, data.imageSize, data.imageRotation, CameraLensDirection.back);
     if (mounted) {
-      setState(() {
-        _customPaint = CustomPaint(painter: painter);
-      });
+      setState(() => _customPaint = CustomPaint(painter: painter));
     }
   }
 
-  void _onPoseDataReceived(List<Pose> poses) {
-    if (poses.isNotEmpty) {
-      final landmarks = poses.first.landmarks;
-
+  void _updateRepCounter(Pose pose) {
+     final landmarks = pose.landmarks;
       if (landmarks.containsKey(PoseLandmarkType.leftShoulder) &&
           landmarks.containsKey(PoseLandmarkType.leftElbow) &&
           landmarks.containsKey(PoseLandmarkType.leftWrist)) {
@@ -137,30 +84,88 @@ class _VideoTestScreenState extends State<VideoTestScreen> {
           _currentStage = 'DOWN';
         }
       }
-    }
   }
 
-  Future<void> _pickAndPlayVideo() async {
-    final hasPoseData = await _loadPoseData();
-    if (!hasPoseData) return;
-
+  Future<void> _pickAndAnalyzeVideo() async {
     FilePickerResult? result =
         await FilePicker.platform.pickFiles(type: FileType.video);
 
-    if (result != null) {
-      final file = File(result.files.single.path!);
+    if (result != null && result.files.single.path != null) {
+      final videoFile = File(result.files.single.path!);
+
+      setState(() {
+        _isProcessingVideo = true;
+        _feedback = "Chopping up the video... this might take a moment, uwu";
+        _customPaint = null;
+        _repCounter = 0;
+      });
+
       await _controller?.dispose();
       _frameTimer?.cancel();
-      _controller = VideoPlayerController.file(file);
+      await _frameProcessor.cleanupFrames(_framePaths);
+
+      _framePaths = await _frameProcessor.extractFrames(videoFile.path);
+
+      if (_framePaths.isEmpty && mounted) {
+        setState(() {
+          _isProcessingVideo = false;
+          _feedback = "Oh noes! Failed to process video. T_T";
+        });
+        return;
+      }
+
+      _controller = VideoPlayerController.file(videoFile);
       await _controller!.initialize();
       await _controller!.setLooping(true);
 
       setState(() {
-        _feedback = "Video loaded! Press play, master!";
-        _repCounter = 0;
-        _currentFrameIndex = 0;
+        _isProcessingVideo = false;
+        _feedback = "Ready! Press play to analyze.";
       });
     }
+  }
+
+  void _startAnalysis() {
+    if (_controller == null || _framePaths.isEmpty) return;
+
+    // We use a standard 30fps timer and sync to the video's position.
+    const frameDuration = Duration(milliseconds: 33);
+    _currentFrameIndex = 0;
+
+    _frameTimer?.cancel();
+    _frameTimer = Timer.periodic(frameDuration, (timer) async {
+        if (!(_controller?.value.isPlaying ?? false)) {
+            timer.cancel();
+            return;
+        }
+
+        // Sync the data frame to the video's actual playtime!
+        final currentPosition = _controller!.value.position.inMilliseconds;
+        final totalDuration = _controller!.value.duration.inMilliseconds;
+        if (totalDuration > 0) {
+            _currentFrameIndex = ((currentPosition / totalDuration) * _framePaths.length).floor();
+        }
+
+        if(_currentFrameIndex >= _framePaths.length) {
+            _currentFrameIndex = _framePaths.length - 1; // Stay on the last frame
+        }
+
+        final frameFile = File(_framePaths[_currentFrameIndex]);
+        final imageBytes = await frameFile.readAsBytes();
+        final imageSize = _controller!.value.size;
+
+        final inputImage = InputImage.fromBytes(
+            bytes: imageBytes,
+            metadata: InputImageMetadata(
+                size: imageSize,
+                rotation: InputImageRotation.rotation0deg,
+                format: InputImageFormat.bgra8888, // PNGs are yummy BGRA
+                bytesPerRow: imageSize.width.toInt() * 4,
+            ),
+        );
+
+        _poseDetectorService.processImage(inputImage);
+    });
   }
 
   @override
@@ -174,7 +179,18 @@ class _VideoTestScreenState extends State<VideoTestScreen> {
       body: Column(
         children: [
           Expanded(
-            child: _controller != null && _controller!.value.isInitialized
+            child: _isProcessingVideo
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(color: Colors.yellowAccent),
+                      const SizedBox(height: 20),
+                      Text(_feedback, style: GoogleFonts.firaCode(color: Colors.white)),
+                    ],
+                  )
+                )
+              : _controller != null && _controller!.value.isInitialized
                 ? Center(
                     child: AspectRatio(
                       aspectRatio: _controller!.value.aspectRatio,
@@ -210,20 +226,19 @@ class _VideoTestScreenState extends State<VideoTestScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               ElevatedButton.icon(
-                onPressed: _pickAndPlayVideo,
+                onPressed: _isProcessingVideo ? null : _pickAndAnalyzeVideo,
                 icon: const Icon(Icons.video_library),
                 label: const Text("Select Video"),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.black,
                   backgroundColor: Colors.yellowAccent,
+                  disabledBackgroundColor: Colors.grey[700],
                 ),
               ),
               if (_controller != null)
                 IconButton(
                   icon: Icon(
-                    _controller!.value.isPlaying
-                        ? Icons.pause
-                        : Icons.play_arrow,
+                    _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
                     color: Colors.white,
                     size: 30,
                   ),
@@ -234,12 +249,12 @@ class _VideoTestScreenState extends State<VideoTestScreen> {
                         _controller!.pause();
                         _frameTimer?.cancel();
                       } else {
-                        // Reset for a fresh test!
+                        // Reset for a fresh test run!
                         _repCounter = 0;
                         _currentFrameIndex = 0;
                         _controller!.seekTo(Duration.zero);
                         _controller!.play();
-                        _startFrameProcessing();
+                        _startAnalysis();
                       }
                     });
                   },

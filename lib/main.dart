@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // THE FIX: Corrected import path
-import 'features/pose_detector/screens/home_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+// THE FIX: It knows its new family name now! Yay!
+import 'package:sports_app/features/pose_detector/screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF121212),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
+          color: Colors.transparent,
           elevation: 0,
         ),
         textTheme: GoogleFonts.firaCodeTextTheme(
