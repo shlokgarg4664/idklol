@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF121212),
         appBarTheme: const AppBarTheme(
-          color: Colors.transparent,
+          backgroundColor: Colors.transparent,
           elevation: 0,
         ),
         textTheme: GoogleFonts.firaCodeTextTheme(

@@ -1,5 +1,6 @@
 import org.gradle.api.initialization.resolve.RepositoriesMode
 import java.io.File
+import java.util.Properties
 
 pluginManagement {
     val localPropertiesFile = File(settings.rootDir, "local.properties")
