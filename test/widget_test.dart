@@ -11,20 +11,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sports_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('App builds and shows HomeScreen overlay instruction', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Allow a couple of frames for async initializations
+    await tester.pump(const Duration(milliseconds: 50));
+    // Verify that the app title is set and at least renders MaterialApp
+    expect(find.byType(MaterialApp), findsOneWidget);
+    // Since HomeScreen shows an initializing text, assert one of the known strings
+    expect(find.textContaining('Initializing AI'), findsWidgets);
   });
 }

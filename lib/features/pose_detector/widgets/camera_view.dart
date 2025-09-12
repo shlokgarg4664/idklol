@@ -56,7 +56,12 @@ class _CameraViewState extends State<CameraView> with WidgetsBindingObserver {
         state == AppLifecycleState.detached) {
       _stopLiveFeed();
     } else if (state == AppLifecycleState.resumed) {
-      _startLiveFeed();
+      // Longer delay to prevent screenshot buffering issues
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && _controller != null && !_controller!.value.isInitialized) {
+          _startLiveFeed();
+        }
+      });
     }
   }
 
@@ -144,7 +149,7 @@ class _CameraViewState extends State<CameraView> with WidgetsBindingObserver {
                 ? Icons.flip_camera_ios_outlined
                 : Icons.flip_camera_android_outlined,
             size: 30,
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
       );
