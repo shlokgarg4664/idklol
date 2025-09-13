@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sports_app/ui/root_shell.dart';
 import 'package:sports_app/ui/theme/theme_controller.dart';
@@ -7,8 +8,16 @@ import 'package:sports_app/core/user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize other services
   await ThemeController.instance.load();
   await UserService().initialize();
+  
+  // Set up error handling
+  FlutterError.onError = (errorDetails) {
+    print('Flutter Error: ${errorDetails.exception}');
+  };
+  
   runApp(const MyApp());
 }
 

@@ -1,15 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sports_app/core/app_config.dart';
+import 'package:sports_app/core/firebase_auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080/api/v1';
   late final Dio _dio;
 
   ApiService() {
     _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 3),
+      baseUrl: AppConfig.apiBaseUrl,
+      connectTimeout: Duration(seconds: AppConfig.apiTimeoutSeconds),
+      receiveTimeout: Duration(seconds: AppConfig.apiTimeoutSeconds),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -17,68 +19,62 @@ class ApiService {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await _getToken();
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
+        // For now, skip Firebase token - we'll add it back later
+        // final token = await FirebaseAuthService().getIdToken();
+        // if (token != null) {
+        //   options.headers['Authorization'] = 'Bearer $token';
+        // }
         handler.next(options);
       },
-      onError: (error, handler) {
-        if (error.response?.statusCode == 401) {
-          _clearToken();
-        }
+      onError: (error, handler) async {
+        // For now, just pass through errors
         handler.next(error);
       },
     ));
   }
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
-  }
-
-  Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
-  }
-
-  Future<void> _clearToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-  }
-
-  // Auth endpoints
+  // Auth endpoints - temporarily simplified without Firebase
   Future<Map<String, dynamic>> register(Map<String, dynamic> userData) async {
     try {
-      final response = await _dio.post('/auth/register', data: userData);
-      final token = response.data['token'];
-      if (token != null) {
-        await _saveToken(token);
-      }
-      return response.data;
+      // For now, just return a mock response
+      // TODO: Implement proper registration with backend API
+      return {
+        'message': 'Registration temporarily disabled - Firebase not configured',
+        'token': 'mock_token',
+        'user': {
+          'uid': 'mock_uid',
+          'email': userData['email'],
+          'displayName': userData['username'],
+          ...userData,
+        }
+      };
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<Map<String, dynamic>> login(String username, String password) async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      final response = await _dio.post('/auth/login', data: {
-        'username': username,
-        'password': password,
-      });
-      final token = response.data['token'];
-      if (token != null) {
-        await _saveToken(token);
-      }
-      return response.data;
+      // For now, just return a mock response
+      // TODO: Implement proper login with backend API
+      return {
+        'message': 'Login temporarily disabled - Firebase not configured',
+        'token': 'mock_token',
+        'user': {
+          'uid': 'mock_uid',
+          'email': email,
+          'displayName': 'Mock User',
+        }
+      };
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
   Future<void> logout() async {
-    await _clearToken();
+    // For now, just clear local state
+    // TODO: Implement proper logout
+    debugPrint('Logout called - Firebase not configured');
   }
 
   // User profile endpoints

@@ -103,8 +103,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              if (DeveloperCredentials.validateCredentials(
+            onPressed: () async {
+              if (await DeveloperCredentials.validateCredentials(
                 usernameController.text,
                 passwordController.text,
               )) {

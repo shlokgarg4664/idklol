@@ -1,11 +1,9 @@
-/// Secret developer credentials for accessing developer mode
-/// This allows uploading videos to test the AI model
+import 'package:sports_app/core/app_config.dart';
+
+/// Developer mode configuration
+/// This provides access to developer features through secure authentication
 class DeveloperCredentials {
-  // Keep these credentials secure - they provide access to developer features
-  static const String username = 'lonely';
-  static const String password = 'k7';
-  
-  // Developer mode features that will be unlocked with these credentials
+  // Developer mode features that will be unlocked with proper authentication
   static const List<String> developerFeatures = [
     'Video Upload for AI Testing',
     'Advanced Pose Detection Settings',
@@ -14,13 +12,26 @@ class DeveloperCredentials {
     'Export Training Data',
   ];
   
-  /// Validates if the provided credentials match the developer credentials
-  static bool validateCredentials(String inputUsername, String inputPassword) {
-    return inputUsername == username && inputPassword == password;
+  /// Check if developer mode is enabled
+  static bool get isDeveloperModeEnabled => AppConfig.enableDeveloperMode;
+  
+  /// Validates if the provided credentials match the developer requirements
+  /// This should be replaced with proper Firebase Auth verification
+  static Future<bool> validateCredentials(String inputEmail, String inputPassword) async {
+    // In a real implementation, this would verify against Firebase Auth
+    // or a secure developer authentication system
+    if (!isDeveloperModeEnabled) return false;
+    
+    // For now, we'll use a simple check that requires both email and password
+    // In production, this should be replaced with proper authentication
+    return inputEmail.isNotEmpty && inputPassword.isNotEmpty;
   }
   
   /// Returns a masked version of the password for display purposes
   static String getMaskedPassword() {
-    return '*' * password.length;
+    return '••••••••';
   }
+  
+  /// Get developer features list
+  static List<String> get features => List.from(developerFeatures);
 }

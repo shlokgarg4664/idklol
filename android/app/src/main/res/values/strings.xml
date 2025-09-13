@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PushUp App</string>
+    
+    <!-- Firebase Configuration -->
+    <string name="default_web_client_id">130904067918-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com</string>
+    <string name="firebase_database_url">https://sports-app-firebase-default-rtdb.firebaseio.com</string>
+    <string name="gcm_default_sender_id">130904067918</string>
+    <string name="google_api_key">AIzaSyAkGLRtb4Fh6UyO1QBaUpbuXaHAXOcU4YI</string>
+    <string name="google_app_id">1:130904067918:android:aef2f65e1e0b242765581f</string>
+    <string name="google_crash_reporting_api_key">AIzaSyAkGLRtb4Fh6UyO1QBaUpbuXaHAXOcU4YI</string>
+    <string name="google_storage_bucket">sports-app-firebase.firebasestorage.app</string>
+    <string name="project_id">sports-app-firebase</string>
+    
+    <!-- Required for Firebase Messaging -->
+    <string name="messaging_sender_id">130904067918</string>
+</resources>

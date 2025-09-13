@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sports_app/core/api_service.dart';
+import 'package:sports_app/core/firebase_auth_service.dart';
 import 'package:sports_app/core/models/user_model.dart';
 
 class UserService extends ChangeNotifier {
@@ -9,6 +10,7 @@ class UserService extends ChangeNotifier {
   UserService._internal();
 
   final ApiService _apiService = ApiService();
+  // final FirebaseAuthService _firebaseAuth = FirebaseAuthService(); // Temporarily disabled
   
   User? _currentUser;
   UserStats? _userStats;
@@ -23,13 +25,9 @@ class UserService extends ChangeNotifier {
   Future<void> initialize() async {
     _setLoading(true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final hasToken = prefs.containsKey('auth_token');
-      
-      if (hasToken) {
-        await _loadUserProfile();
-        _isLoggedIn = true;
-      }
+      // For now, just initialize without Firebase
+      // TODO: Add Firebase Auth back when properly configured
+      debugPrint('User service initialized without Firebase');
     } catch (e) {
       debugPrint('Failed to initialize user service: $e');
       await logout();
@@ -39,10 +37,10 @@ class UserService extends ChangeNotifier {
     }
   }
 
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(String email, String password) async {
     _setLoading(true);
     try {
-      final response = await _apiService.login(username, password);
+      final response = await _apiService.login(email, password);
       _currentUser = User.fromJson(response['user']);
       _isLoggedIn = true;
       await _loadUserStats();
